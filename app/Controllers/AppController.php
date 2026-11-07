@@ -51,11 +51,12 @@ final class AppController
         $base = base_path();
         // The cache name changes whenever the stylesheet or script changes, so updates reach installed apps
         $stamp = self::SW_VERSION . '-' . substr(md5(
-            (string) @filemtime(ROOT . '/assets/css/app.css') . (string) @filemtime(ROOT . '/assets/js/app.js')
+            (string) @filemtime(ROOT . '/assets/css/app.css') . (string) @filemtime(ROOT . '/assets/css/redesign.css')
+            . (string) @filemtime(ROOT . '/assets/js/app.js')
         ), 0, 8);
         $shell = [
             url('/offline'),
-            asset('css/app.css'), asset('js/app.js'),
+            asset('css/app.css'), asset('css/redesign.css'), asset('js/app.js'),
             url('/assets/fonts/archivo-variable.woff2'),
             asset('img/favicon.svg'), url('/assets/img/icon-192.png'),
         ];

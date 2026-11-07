@@ -5,87 +5,50 @@ $isClientOrGuest = !$u || is_role('client');
 ?>
 <div class="container home">
 
-  <!-- 1. Banner carousel (first slide: greeting + search) beside the next booking -->
   <section class="home-hero">
-    <!-- Banner: greeting, the main search and what makes Servease safe to use -->
     <section class="home-banner" aria-label="Search for a service">
+      <picture class="hero-photo">
+        <source media="(min-width: 601px)" srcset="<?= e(asset('img/hero-technician.webp')) ?>">
+        <img src="<?= e(asset('img/hero-placeholder.svg')) ?>" width="1440" height="960" alt="" fetchpriority="high" decoding="async">
+      </picture>
+      <span class="hero-tag" aria-hidden="true"><?= icon('tag') ?></span>
       <div class="banner-copy">
-        <h1><?= $u ? 'What needs fixing, ' . e($u['first_name']) . '?' : 'What needs fixing at home?' ?></h1>
+        <p class="hero-eyebrow hero-desktop-greeting"><?= $u ? 'Good morning, ' . e($u['first_name']) : 'Welcome to Servease' ?></p>
+        <p class="hero-mobile-greeting"><?= $u ? 'Hi, ' . e($u['first_name']) : 'Hello there' ?> <span aria-hidden="true">👋</span></p>
+        <h1><span class="hero-desktop-title">A little help.<br>A better home.</span><span class="hero-mobile-title">What needs a hand?</span></h1>
+        <p class="hero-description">Find trusted local pros for your everyday to-dos.</p>
         <form class="banner-search" action="<?= e(url('/services')) ?>" method="get" role="search">
           <label class="banner-field">
             <?= icon('search') ?>
-            <span class="sr-only">What do you need done?</span>
-            <input name="q" type="search" placeholder="Leaking sink, aircon cleaning, math tutor" autocomplete="off">
+            <span class="sr-only">What can we help with?</span>
+            <input name="q" type="search" placeholder="What can we help with?" autocomplete="off" data-home-search="<?= e(Lang::text('Search services')) ?>">
           </label>
-          <button class="btn btn-accent banner-go" type="submit"><span class="hide-sm">Search</span><span class="show-sm" aria-hidden="true"><?= icon('search') ?></span><span class="sr-only show-sm">Search</span></button>
+          <button class="btn btn-primary banner-go" type="submit" aria-label="Find a service"><span class="search-button-label">Find a service</span><span class="search-button-icon" aria-hidden="true"><?= icon('search') ?></span></button>
         </form>
-        <?php if ($quick): ?>
-          <div class="banner-quick" aria-label="Popular in <?= e($city) ?>">
-            <?php foreach ($quick as $qk): ?>
-              <a href="<?= e(url('/services', ['q' => $qk['title']])) ?>"><?= e($qk['title']) ?> <span>from <?= money($qk['from_price']) ?></span></a>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
-        <?php if ($cityPros): ?>
-          <p class="banner-note"><?= icon('badge-check', 'icon-sm') ?><span><?= $cityPros ?> verified pro<?= $cityPros === 1 ? '' : 's' ?> near you<?= $freeTomorrow ? ' · ' . $freeTomorrow . ' available tomorrow' : '' ?> · Pay after the job</span></p>
-        <?php endif; ?>
+        <p class="banner-note">ID-checked pros <span>·</span> Clear prices <span>·</span> Local expertise</p>
       </div>
-      <?php if ($deal): ?>
-        <a class="banner-tag" href="<?= e(url('/services', ['category' => $deal['slug']] + ($dealInCity ? ['city' => $city] : []))) ?>">
-          <span class="banner-tag-what"><?= e(preg_replace('/ &.*$/', '', $deal['name'])) ?><?= $dealInCity ? ' in ' . e($city) : '' ?></span>
-          <span class="banner-tag-price"><small>from</small><?= money($deal['from_price']) ?></span>
-          <span class="banner-tag-sub"><?= (int) $deal['n'] ?> services to compare</span>
-        </a>
-      <?php endif; ?>
     </section>
-
-    <?php if ($next || ($u && $isPro)): ?>
-    <!-- 3 (phone) / side card (computer): what's happening for you -->
-    <aside class="side-card">
-      <?php if ($next): ?>
-        <div class="side-head">
-          <span class="side-title"><?= $isPro ? 'Your next job' : 'Your next booking' ?></span>
-          <?= badge($next['status']) ?>
-        </div>
-        <div class="side-svc">
-          <span class="svc-ic" style="--tint:<?= category_tint($next['category_slug'] ?? null) ?>"><?= category_art($next['category_slug'] ?? null, $next['category_icon'] ?: 'wrench') ?></span>
-          <span class="grow">
-            <strong class="truncate"><?= e($next['title']) ?></strong>
-            <small class="side-who"><?= avatar(['id' => $next['other_id'], 'first_name' => $next['first_name'], 'last_name' => $next['last_name'], 'avatar' => $next['avatar']], 'xs') ?><?= $isPro ? 'for' : 'with' ?> <?= e($next['first_name'] . ' ' . mb_substr($next['last_name'], 0, 1) . '.') ?></small>
-          </span>
-        </div>
-        <ul class="side-facts">
-          <li><?= icon('calendar') ?><?= $next['scheduled_date'] ? e(fmt_date($next['scheduled_date'], 'D, M j')) . ($next['scheduled_time'] ? ' · ' . e(date('g:i A', strtotime($next['scheduled_time']))) : '') : 'Date to be agreed' ?></li>
-          <li><?= icon('map-pin') ?><?= e($next['city'] ?: '—') ?></li>
-          <li><?= icon('wallet') ?><?= money($next['amount']) ?></li>
-        </ul>
-        <?php $stepAt = ['requested' => 0, 'accepted' => 1, 'in_progress' => 2][$next['status']] ?? 0; ?>
-        <ol class="side-track" aria-label="Booking progress">
-          <?php foreach (['Requested', 'Confirmed', 'In progress', 'Completed'] as $si => $sl): ?>
-            <li class="<?= $si < $stepAt ? 'is-done' : ($si === $stepAt ? 'is-now' : '') ?>"<?= $si === $stepAt ? ' aria-current="step"' : '' ?>><span class="side-track-dot"><?= $si < $stepAt ? icon('check') : '' ?></span><span class="side-track-lbl"><?= $sl ?></span></li>
-          <?php endforeach; ?>
-        </ol>
-        <div class="side-actions">
-          <a class="btn btn-dark grow" href="<?= e(url('/bookings/' . $next['id'])) ?>">View booking</a>
-          <a class="icon-btn icon-btn-outline" href="<?= e(url('/messages')) ?>" aria-label="Open inbox"><?= icon('message') ?></a>
-        </div>
-      <?php else: ?>
+    <?php if ($next): ?>
+      <?= partial('upcoming-booking', ['next' => $next, 'isPro' => $isPro]) ?>
+    <?php elseif ($u && $isPro): ?>
+      <aside class="side-card business-summary">
         <div class="side-head"><span class="side-title">Your business</span></div>
-        <div class="side-big"><strong><?= (int) $pendingRequests ?></strong><span>new request<?= $pendingRequests === 1 ? '' : 's' ?> waiting</span></div>
-        <p class="small muted">Pros who reply within an hour win more bookings.</p>
-        <div class="side-actions"><a class="btn btn-dark grow" href="<?= e(url('/bookings')) ?>">Open bookings</a></div>
-      <?php endif; ?>
-    </aside>
-    <?php elseif (!$u): ?>
-    <aside class="side-card hide-md">
-      <div class="side-head"><span class="side-title">How Servease works</span></div>
-      <ol class="side-steps">
-        <li><span>1</span><div><strong>Pick a service</strong><small>See the price and the pro before you book</small></div></li>
-        <li><span>2</span><div><strong>Book a time that's open</strong><small>Your pro confirms the price first</small></div></li>
-        <li><span>3</span><div><strong>Pay after the job</strong><small>Directly to your pro: GCash, Maya or cash</small></div></li>
-      </ol>
-      <a class="btn-link small mt-auto" href="<?= e(url('/how-it-works')) ?>">Learn more <?= icon('arrow-right', 'icon-sm') ?></a>
-    </aside>
+        <div class="side-big"><strong><?= (int) $pendingRequests ?></strong><span>new requests waiting</span></div>
+        <p class="small muted">Your next great job starts here.</p>
+        <a class="btn btn-primary" href="<?= e(url('/bookings')) ?>">Open bookings <?= icon('arrow-right') ?></a>
+      </aside>
+    <?php else: ?>
+      <aside class="side-card home-get-started">
+        <span class="side-title"><?= icon('ticket') ?> Your next booking</span>
+        <div class="home-booking-empty">
+          <span class="empty-booking-icon" aria-hidden="true"><?= icon('calendar') ?></span>
+          <div>
+            <h2>No upcoming bookings</h2>
+            <p class="muted small">Your next service will appear here.</p>
+          </div>
+        </div>
+        <a class="btn btn-primary" href="<?= e(url('/services')) ?>">Explore services <?= icon('arrow-right') ?></a>
+      </aside>
     <?php endif; ?>
   </section>
 
@@ -111,18 +74,24 @@ $isClientOrGuest = !$u || is_role('client');
   </div>
 
   <!-- 2. Categories -->
-  <section class="home-section">
+  <section class="home-section home-categories">
     <div class="section-head">
-      <h2>Categories</h2>
+      <h2>What do you need help with?</h2>
       <a class="more" href="<?= e(url('/categories')) ?>">View all</a>
     </div>
     <div class="cat-row">
-      <?php foreach (array_slice($categories, 0, 8) as $i => $c): ?>
-        <a class="cat-item" href="<?= e(url('/services', ['category' => $c['slug']])) ?>" style="--i:<?= $i ?>">
-          <span class="cat-icon" style="--tint:<?= category_tint($c['slug']) ?>"><?= category_art($c['slug'], $c['icon']) ?></span>
-          <span class="cat-name"><?= e(preg_replace('/ &.*$/', '', $c['name'])) ?></span>
+      <?php
+        $categoryOrder = ['aircon', 'cleaning', 'plumbing', 'electrical', 'carpentry', 'painting', 'handyman', 'moving'];
+        $homeCategories = [];
+        foreach ($categoryOrder as $slug) foreach ($categories as $c) if ($c['slug'] === $slug) $homeCategories[] = $c;
+      ?>
+      <?php foreach ($homeCategories as $c): ?>
+        <a class="cat-item" href="<?= e(url('/services', ['category' => $c['slug']])) ?>">
+          <span class="cat-icon"><?= category_art($c['slug'], $c['icon']) ?></span>
+          <span class="cat-name"><?= e($c['slug'] === 'cleaning' ? 'Cleaning' : preg_replace('/ &.*$/', '', $c['name'])) ?></span>
         </a>
       <?php endforeach; ?>
+      <a class="cat-item cat-more" href="<?= e(url('/categories')) ?>"><span class="cat-icon"><?= icon('more-services') ?></span><span class="cat-name">More</span></a>
     </div>
   </section>
 
@@ -140,17 +109,25 @@ $isClientOrGuest = !$u || is_role('client');
 
   <?php if ($popular): ?>
   <!-- Near you: services in the chosen city -->
-  <section class="home-section">
+  <section class="home-section home-popular">
     <div class="section-head">
       <div>
-        <h2><?= $popularInCity ? 'Near you' : 'Popular services' ?></h2>
-        <p class="muted small"><?= $popularInCity ? 'Services in ' . e($city) : 'The most booked services, nearest first' ?></p>
+        <h2>Popular near you</h2>
+        <p class="muted small"><?= $popularInCity ? 'Trusted services in ' : 'Trusted services near ' ?><?= e($city) ?></p>
       </div>
-      <a class="more" href="<?= e(url('/services', $popularInCity ? ['city' => $city] : [])) ?>">View all</a>
+      <a class="more" href="<?= e(url('/services', $popularInCity ? ['city' => $city] : [])) ?>">View all <?= icon('chevron-right') ?></a>
     </div>
     <div class="near-row">
-      <?php foreach (array_slice($popular, 0, 8) as $s): ?><?= partial('near-card', ['s' => $s]) ?><?php endforeach; ?>
+      <?php foreach ($popular as $s): ?><?= partial('near-card', ['s' => $s]) ?><?php endforeach; ?>
     </div>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($isClientOrGuest): ?>
+  <section class="home-job-prompt">
+    <?= icon('wrench') ?><strong>Have something else in mind?</strong>
+    <span>Can't find the exact service? Tell us what you need and get matched with local pros.</span>
+    <a class="btn btn-outline btn-sm" href="<?= e(url('/jobs/new')) ?>">Post a job</a>
   </section>
   <?php endif; ?>
 

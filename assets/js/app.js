@@ -123,6 +123,14 @@
   /* ---- Top search: a shorter hint on phones ------------------------------- */
   const topQ = $('#top-q');
   if (topQ && matchMedia('(max-width: 900px)').matches) topQ.placeholder = 'Search services';
+  const homeSearch = $('[data-home-search]');
+  if (homeSearch) {
+    const phone = matchMedia('(max-width: 600px)');
+    const wideHint = homeSearch.placeholder;
+    const setSearchHint = () => { homeSearch.placeholder = phone.matches ? homeSearch.dataset.homeSearch : wideHint; };
+    setSearchHint();
+    phone.addEventListener('change', setSearchHint);
+  }
 
   /* ---- Onboarding slides: Next / Skip / dots follow the swipe ------------ */
   const ob = $('[data-onboard]');

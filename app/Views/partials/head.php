@@ -28,6 +28,7 @@ $desc = $description ?? 'Servease connects you with verified local pros for airc
 <link rel="manifest" href="<?= e(url('/manifest.webmanifest')) ?>">
 <link rel="preload" href="<?= e(url('/assets/fonts/archivo-variable.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset('css/redesign.css')) ?>">
 <script>
   /* Theme: the person's saved choice, otherwise follow the phone or computer setting */
   (function () { var t = null; try { t = localStorage.getItem('servease-theme'); } catch (e) {}
@@ -39,6 +40,8 @@ $desc = $description ?? 'Servease connects you with verified local pros for airc
     window.addEventListener('pageswap', function () { try { sessionStorage.setItem('se-depth', String(depth())); } catch (e) {} });
     window.addEventListener('pagereveal', function (e) {
       if (!e.viewTransition) return;
+      // A hidden tab can skip a navigation transition while the page still loads normally.
+      e.viewTransition.ready.catch(function () {});
       var type = 'fade';
       try {
         var from = +sessionStorage.getItem('se-depth') || 1, to = depth();

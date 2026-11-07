@@ -646,7 +646,7 @@ function category_tint(?string $slug): string
 /** Line icon for a category, drawn in the brand blue on a soft-blue tile by the surrounding CSS. */
 function category_art(?string $slug, ?string $icon = 'wrench', string $class = 'cat-art', int $size = 64): string
 {
-    $map = ['aircon' => 'air-vent', 'cleaning' => 'spray-can', 'plumbing' => 'droplets'];
+    $map = ['aircon' => 'air-vent', 'cleaning' => 'broom', 'plumbing' => 'drain-pipe', 'carpentry' => 'hand-saw'];
     return icon($map[(string) $slug] ?? ($icon ?: 'wrench'), $class . ' cat-art-line');
 }
 
@@ -663,53 +663,17 @@ function service_photo(?string $slug, ?string $cover = null, int $seed = 0): ?st
     return $name !== '' ? stock_photo($name) : null;
 }
 
-/**
- * URL of a trade photo in the brand duotone (navy shadows, Servease blue midtones, cream highlights).
- * The tint is baked into a real image file (assets/img/photos/duo/) instead of a live SVG/CSS filter:
- * live filters can be painted onto the wrong elements by some browsers (e.g. during page transitions
- * the yellow logo and price tags turned blue), and they cost GPU time on every scroll.
- * The tinted copy is (re)made automatically when a source photo is added or replaced.
- */
+/** URL for a natural trade photo. Provider uploads take precedence in service_photo(). */
 function stock_photo(string $name): ?string
 {
     $name = basename($name);
-    $src = ROOT . '/assets/img/photos/' . $name . '.jpg';
-    if (!is_file($src)) return null;
-    $out = ROOT . '/assets/img/photos/duo/' . $name . '.jpg';
-    if (!is_file($out) || filemtime($out) < filemtime($src)) {
-        if (!duotone_bake($src, $out)) return asset('img/photos/' . $name . '.jpg'); // no GD: plain photo
+    $collection = ['aircon' => 'aircon', 'cleaning' => 'cleaning', 'deep-cleaning' => 'cleaning', 'plumbing' => 'plumbing'];
+    if (isset($collection[$name])) {
+        $photo = 'img/photos/' . $collection[$name] . '-service.webp';
+        if (is_file(ROOT . '/assets/' . $photo)) return asset($photo);
     }
-    return asset('img/photos/duo/' . $name . '.jpg');
-}
-
-/** Writes a duotone copy of a JPEG with GD. */
-function duotone_bake(string $src, string $out): bool
-{
-    if (!function_exists('imagecreatefromjpeg') || !($im = @imagecreatefromjpeg($src))) return false;
-    // Luminance 0..1 maps through these stops (shadows → midtones → light → highlights)
-    $stops = [[.059, .122, .361], [.122, .275, .784], [.62, .72, .95], [1, .93, .80]];
-    $lut = [];
-    for ($l = 0; $l < 256; $l++) {
-        $t = $l / 255 * 3; $i = min(2, (int) floor($t)); $f = $t - $i;
-        $c = [];
-        for ($k = 0; $k < 3; $k++) $c[$k] = (int) round(($stops[$i][$k] + ($stops[$i + 1][$k] - $stops[$i][$k]) * $f) * 255);
-        $lut[$l] = ($c[0] << 16) | ($c[1] << 8) | $c[2];
-    }
-    $w = imagesx($im); $h = imagesy($im);
-    imagepalettetotruecolor($im);
-    for ($y = 0; $y < $h; $y++) {
-        for ($x = 0; $x < $w; $x++) {
-            $rgb = imagecolorat($im, $x, $y);
-            $l = (int) round(.2126 * (($rgb >> 16) & 255) + .7152 * (($rgb >> 8) & 255) + .0722 * ($rgb & 255));
-            imagesetpixel($im, $x, $y, $lut[min(255, $l)]);
-        }
-    }
-    if (!is_dir(dirname($out))) @mkdir(dirname($out), 0775, true);
-    $tmp = $out . '.' . getmypid() . '.tmp';
-    $ok = @imagejpeg($im, $tmp, 84) && @rename($tmp, $out);
-    if (!$ok) @unlink($tmp);
-    imagedestroy($im);
-    return $ok;
+    $photo = 'img/photos/' . $name . '.jpg';
+    return is_file(ROOT . '/assets/' . $photo) ? asset($photo) : null;
 }
 
 /** A price split for cards: optional "from", the amount, and the unit ("/ hour", "/ job"). */

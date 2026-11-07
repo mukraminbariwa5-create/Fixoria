@@ -113,7 +113,7 @@ if ($u) {
         <?php /* Phones: the avatar opens the Profile tab (the tab bar already carries navigation, so no extra menu) */ ?>
         <a class="user-chip user-chip-phone show-md" href="<?= e(url('/account')) ?>" aria-label="Your profile"><?= avatar($u, 'sm') ?></a>
         <details class="dropdown user-menu hide-md">
-          <summary class="user-chip" aria-label="Account menu"><?= avatar($u, 'sm') ?><?= icon('chevron-down', 'icon-sm') ?></summary>
+          <summary class="user-chip" aria-label="Account menu"><?= avatar($u, 'sm') ?><span class="account-first-name"><?= e($u['first_name']) ?></span><?= icon('chevron-down', 'icon-sm') ?></summary>
           <div class="dropdown-menu">
             <div class="dropdown-head">
               <div class="row" style="--gap:10px">
